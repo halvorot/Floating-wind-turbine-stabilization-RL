@@ -5,6 +5,7 @@ from termcolor import colored
 import matplotlib.pyplot as plt
 
 from gym_turbine.objects.turbine import Turbine
+import gym_turbine.utils.state_space as ss
 
 class TurbineEnv(gym.Env):
     """
@@ -171,25 +172,15 @@ class TurbineEnv(gym.Env):
         return [seed]
 
     def render(self):
+        ax = self.turbine.plot_turbine()
 
-        x_surface = self.turbine.position[0]
-        y_surface = self.turbine.position[1]
-        z_surface = self.turbine.position[2]
-        x_top = x_surface + self.turbine.height*np.sin(self.turbine.pitch)*np.cos(self.turbine.roll)
-        y_top = -(y_surface + self.turbine.height*np.sin(self.turbine.roll)*np.cos(self.turbine.pitch))
-        z_top = z_surface + self.turbine.height*np.cos(self.turbine.pitch)
+        # ax.set_aspect('equal', adjustable='datalim')
+        ax.set(xlim=(-0.6*ss.H, 0.6*ss.H), ylim=(-0.6*ss.H, 0.6*ss.H), zlim=(-0.7*ss.H, 1.1*ss.H))
+        ax.set_xlabel('$X$')
+        ax.set_ylabel('$Y$')
+        ax.set_zlabel('$Z$')
 
-        x = [x_surface, x_top]
-        y = [y_surface, y_top]
-        z = [z_surface, z_top]
-        x_base = [-0.2*(x_top-x_surface) + x_surface, x_surface]
-        y_base = [-0.2*(y_top-y_surface) + y_surface, y_surface]
-        z_base = [-0.2*(z_top-z_surface) + z_surface, z_surface]
-
-        ax = plt.axes(projection='3d')
-        ax.plot(x, y, z)
-        ax.plot(x_base, y_base, z_base, color='r', linewidth=10)
-        return ax
+        plt.show()
 
     def save_latest_step(self):
         self.episode_history.setdefault('states', []).append(np.copy(self.turbine.state[0:11]))

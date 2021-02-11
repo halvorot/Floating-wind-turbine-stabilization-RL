@@ -1,6 +1,7 @@
 import numpy as np
 import gym_turbine.utils.state_space as ss
 import gym_turbine.utils.geomutils as geom
+import matplotlib.pyplot as plt
 
 def odesolver45(f, y, h, wind_dir):
     """Calculate the next step of an IVP of a time-invariant ODE with a RHS
@@ -32,6 +33,7 @@ class Turbine():
         self.state[5] = ss.H*np.sin(self.pitch)*np.cos(self.roll)
         self.state[6] = -ss.H*np.sin(self.roll)*np.cos(self.pitch)
         self.input = np.zeros(4)                        # Initialize control input
+        self.last_action = self.input
         self.step_size = step_size
         self.height = ss.H - ss.l_c                     # Distance from mean sea level to nacelle center
 
@@ -41,6 +43,7 @@ class Turbine():
         DVA3 = _un_normalize_dva_input(action[2])
         DVA4 = _un_normalize_dva_input(action[3])
         self.input = np.array([DVA1, DVA2, DVA3, DVA4])
+        self.last_action = action
 
         self._sim(wind_dir)
 
@@ -61,6 +64,42 @@ class Turbine():
         state_dot = ss.A(wind_dir).dot(state) + ss.B(wind_dir).dot(self.input) + ss.W().dot(ss.F_d)
 
         return state_dot
+
+    def plot_turbine(self):
+        x_surface = self.position[0]
+        y_surface = self.position[1]
+        z_surface = self.position[2]
+        x_top = x_surface + ss.H*np.sin(self.pitch)*np.cos(self.roll)
+        y_top = -(y_surface + ss.H*np.sin(self.roll)*np.cos(self.pitch))
+        z_top = z_surface + ss.H*np.cos(self.pitch)
+
+        x = [x_surface, x_top]
+        y = [y_surface, y_top]
+        z = [z_surface, z_top]
+        x_base = [-0.5*(x_top-x_surface) + x_surface, x_surface]
+        y_base = [-0.5*(y_top-y_surface) + y_surface, y_surface]
+        z_base = [-0.5*(z_top-z_surface) + z_surface, z_surface]
+
+        ax = plt.axes(projection='3d')
+
+        # Plot pole
+        ax.plot(x, y, z, color='b', linewidth=2)
+        # Plot base
+        ax.plot(x_base, y_base, z_base, color='r', linewidth=8)
+        # Plot line from neutral top position to current top position
+        ax.plot([0, x_top], [0, y_top], [ss.H, z_top], color='k', linewidth=1)
+        # Plot line from neutral base position to current base position
+        ax.plot([0, x_surface], [0, y_surface], [0, z_surface], color='k', linewidth=1)
+
+        # Plot arrow proportional to DVA_1 input
+        ax.plot([x_surface + ss.l]*2, [y_surface]*2, [z_surface, z_surface + 100*self.last_action[0]])
+        # Plot arrow proportional to DVA_2 input
+        ax.plot([x_surface]*2, [y_surface + ss.l]*2, [z_surface, z_surface + 100*self.last_action[1]])
+        # Plot arrow proportional to DVA_3 input
+        ax.plot([x_surface - ss.l]*2, [y_surface]*2, [z_surface, z_surface + 100*self.last_action[2]])
+        # Plot arrow proportional to DVA_4 input
+        ax.plot([x_surface]*2, [y_surface - ss.l]*2, [z_surface, z_surface + 100*self.last_action[3]])
+        return ax
 
     @property
     def pitch(self):
