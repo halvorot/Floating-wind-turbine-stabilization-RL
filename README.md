@@ -1,5 +1,7 @@
-# gym-turbine
-A repository for TTK4900 Master thesis at NTNU. Project is stabilizing floating wind turbines using Deep Reinforcement Learning
+# Floating wind turbine control using Deep RL
+A repository for the first part of TTK4900 Master thesis at NTNU. Later extended to [RL-PSF](https://github.com/TTK4900-RL-PSF/RL-PSF).
+
+Project is stabilizing floating wind turbines using Deep Reinforcement Learning
 
 ## Prerequisites
  - ffmpeg (has to be installed with conda, with pip does not work, conda install ffmpeg)
